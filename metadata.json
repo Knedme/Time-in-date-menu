@@ -1,0 +1,14 @@
+{
+  "name": "Time in date menu",
+  "description": "Adds current time to date menu.",
+  "uuid": "time-in-date-menu@knedme",
+  "shell-version": [
+    "42",
+    "41",
+    "40",
+    "3.38",
+    "3.36"
+  ],
+  "version": 1,
+  "url": "https://github.com/Knedme/Time-in-date-menu"
+}

@@ -4,24 +4,25 @@ const Main = imports.ui.main;
 
 class Extension {
     constructor() {
-        this._oldSetDate = null;
         this._updateTimerId = null;
         this._handlerId = null;
     }
 
     enable() {
         let dateMenu = Main.panel.statusArea.dateMenu;
-        this._oldSetDate = dateMenu._date.setDate; // saving the old setDate
 
         // overriding setDate so that it displays the time
         dateMenu._date.setDate = (date) => {
             dateMenu._date._dayLabel.set_text(date.toLocaleFormat('%A'));
 
-            let dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y %H:%M:%S"));
-            dateMenu._date._dateLabel.set_text(date.toLocaleFormat(dateFormat));
+            let dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y"));
+            let timeFormat = Shell.util_translate_time_string(N_("%H:%M:%S"));
+            dateMenu._date._dateLabel.set_text(
+                date.toLocaleFormat(dateFormat) + " " + date.toLocaleFormat(timeFormat));
 
-            dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y %H:%M:%S"));
-            dateMenu._date.accessible_name = date.toLocaleFormat(dateFormat);
+            dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
+            dateMenu._date.accessible_name =
+                date.toLocaleFormat(dateFormat) + " " + date.toLocaleFormat(timeFormat);
         };
 
         // constant updating of the date after opening the menu
@@ -49,9 +50,16 @@ class Extension {
         dateMenu.menu.disconnect(this._handlerId);
         this._handlerId = null;
 
-        // setting old setDate back
-        dateMenu._date.setDate = this._oldSetDate;
-        this._oldSetDate = null;
+        // removing time from setDate
+        dateMenu._date.setDate = (date) => {
+            dateMenu._date._dayLabel.set_text(date.toLocaleFormat('%A'));
+
+            let dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y"));
+            dateMenu._date._dateLabel.set_text(date.toLocaleFormat(dateFormat));
+
+            dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
+            dateMenu._date.accessible_name = date.toLocaleFormat(dateFormat);
+        };
     }
 }
 

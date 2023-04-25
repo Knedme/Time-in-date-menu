@@ -3,13 +3,14 @@
   "description": "Adds current time to date menu.",
   "uuid": "time-in-date-menu@knedme",
   "shell-version": [
-	"43",
+    "44",
+    "43",
     "42",
     "41",
     "40",
     "3.38",
     "3.36"
   ],
-  "version": 3,
+  "version": 4,
   "url": "https://github.com/Knedme/Time-in-date-menu"
 }

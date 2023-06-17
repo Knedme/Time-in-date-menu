@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.time-in-date-menu" path="/org/gnome/shell/extensions/time-in-date-menu/">
+    <key type="b" name="seconds">
+      <default>true</default>
+      <summary>Seconds</summary>
+      <description>Seconds Visibility Status</description>
+    </key>
+
+    <key type="i" name="hour-format">
+      <default>1</default>
+      <range min="0" max="1" />
+      <summary>0 means 12-hour, 1 means 24-hour</summary>
+      <description>Hour Format</description>
+    </key>
+  </schema>
+</schemalist>

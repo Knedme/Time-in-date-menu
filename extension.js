@@ -1,31 +1,40 @@
 const Shell = imports.gi.Shell;
 const Mainloop = imports.mainloop;
 const Main = imports.ui.main;
+const ExtensionUtils = imports.misc.extensionUtils;
+
+const dateMenu = Main.panel.statusArea.dateMenu;
+
 
 class Extension {
     constructor() {
+        this._timeFormat = ''
         this._updateTimerId = null;
         this._handlerId = null;
     }
 
     enable() {
-        let dateMenu = Main.panel.statusArea.dateMenu;
+        this.settings = ExtensionUtils.getSettings();
 
-        // overriding setDate so that it displays the time
+        this._updateTimeFormat();
+        this.settings.connect('changed', (_, __) => {
+            // updating the time formatting each time the settings are changed
+            this._updateTimeFormat();
+        });
+
+        // overriding setDate to display the time
         dateMenu._date.setDate = (date) => {
             dateMenu._date._dayLabel.set_text(date.toLocaleFormat('%A'));
 
             let dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y"));
-            let timeFormat = Shell.util_translate_time_string(N_("%H:%M:%S"));
-            dateMenu._date._dateLabel.set_text(
-                date.toLocaleFormat(dateFormat) + " " + date.toLocaleFormat(timeFormat));
+            let timeFormat = Shell.util_translate_time_string(N_(this._timeFormat));
+            dateMenu._date._dateLabel.set_text(`${date.toLocaleFormat(dateFormat)} ${date.toLocaleFormat(timeFormat)}`);
 
             dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
-            dateMenu._date.accessible_name =
-                date.toLocaleFormat(dateFormat) + " " + date.toLocaleFormat(timeFormat);
+            dateMenu._date.accessible_name = date.toLocaleFormat(dateFormat);
         };
 
-        // constant updating of the date after opening the menu
+        // permanent date update after opening the menu
         this._handlerId = dateMenu.menu.connect('open-state-changed', (_, isOpen) => {
             if (isOpen) {
                 this._updateTimerId = Mainloop.timeout_add(100, () => {
@@ -39,9 +48,24 @@ class Extension {
         });
     }
 
-    disable() {
-        let dateMenu = Main.panel.statusArea.dateMenu;
+    _updateTimeFormat() {
+        // updates the time formatting depending on the settings
 
+        const seconds = this.settings.get_boolean('seconds');
+        const hourFormat = this.settings.get_int('hour-format');
+
+        if (hourFormat == 0)
+            this._timeFormat = '%I:%M %p';
+        else
+            this._timeFormat = '%H:%M';
+
+        if (seconds)
+            this._timeFormat = this._timeFormat.replace('%M', '%M:%S');
+        else
+            this._timeFormat = this._timeFormat.replace(':%S', '');
+    }
+
+    disable() {
         // disabling the update timer
         Mainloop.source_remove(this._updateTimerId);
         this._updateTimerId = null;
@@ -50,7 +74,7 @@ class Extension {
         dateMenu.menu.disconnect(this._handlerId);
         this._handlerId = null;
 
-        // removing time from setDate
+        // restoring normal setDate
         dateMenu._date.setDate = (date) => {
             dateMenu._date._dayLabel.set_text(date.toLocaleFormat('%A'));
 
@@ -60,6 +84,9 @@ class Extension {
             dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
             dateMenu._date.accessible_name = date.toLocaleFormat(dateFormat);
         };
+
+        this._timeFormat = null;
+        this.settings = null;
     }
 }
 

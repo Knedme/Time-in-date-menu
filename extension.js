@@ -1,37 +1,37 @@
-const Shell = imports.gi.Shell;
+import Shell from 'gi://Shell';
+
+import { panel } from 'resource:///org/gnome/shell/ui/main.js';
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { formatDateWithCFormatString } from 'resource:///org/gnome/shell/misc/dateUtils.js'
 const Mainloop = imports.mainloop;
-const Main = imports.ui.main;
-const ExtensionUtils = imports.misc.extensionUtils;
 
-const dateMenu = Main.panel.statusArea.dateMenu;
+const dateMenu = panel.statusArea.dateMenu;
 
 
-class Extension {
-    constructor() {
+export default class TidmExtension extends Extension {
+    enable() {
         this._timeFormat = ''
         this._updateTimerId = null;
         this._handlerId = null;
-    }
-
-    enable() {
-        this.settings = ExtensionUtils.getSettings();
+        this._settings = this.getSettings();
 
         this._updateTimeFormat();
-        this.settings.connect('changed', (_, __) => {
+        this._settings.connect('changed', (_, __) => {
             // updating the time formatting each time the settings are changed
             this._updateTimeFormat();
         });
 
         // overriding setDate to display the time
         dateMenu._date.setDate = (date) => {
-            dateMenu._date._dayLabel.set_text(date.toLocaleFormat('%A'));
+            dateMenu._date._dayLabel.set_text(formatDateWithCFormatString(date, '%A'));
 
-            let dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y"));
-            let timeFormat = Shell.util_translate_time_string(N_(this._timeFormat));
-            dateMenu._date._dateLabel.set_text(`${date.toLocaleFormat(dateFormat)} ${date.toLocaleFormat(timeFormat)}`);
+            const dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y"));
+            const timeFormat = Shell.util_translate_time_string(N_(this._timeFormat));
+            dateMenu._date._dateLabel.set_text(formatDateWithCFormatString(date, dateFormat) + 
+                                               ' ' + formatDateWithCFormatString(date, timeFormat));
 
-            dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
-            dateMenu._date.accessible_name = date.toLocaleFormat(dateFormat);
+            const dateAccessibleNameFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
+            dateMenu._date.accessible_name = formatDateWithCFormatString(date, dateAccessibleNameFormat);
         };
 
         // permanent date update after opening the menu
@@ -51,8 +51,8 @@ class Extension {
     _updateTimeFormat() {
         // updates the time formatting depending on the settings
 
-        const seconds = this.settings.get_boolean('seconds');
-        const hourFormat = this.settings.get_int('hour-format');
+        const seconds = this._settings.get_boolean('seconds');
+        const hourFormat = this._settings.get_int('hour-format');
 
         if (hourFormat == 0)
             this._timeFormat = '%I:%M %p';
@@ -86,10 +86,6 @@ class Extension {
         };
 
         this._timeFormat = null;
-        this.settings = null;
+        this._settings = null;
     }
-}
-
-function init() {
-    return new Extension();
 }

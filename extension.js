@@ -1,9 +1,9 @@
 import Shell from 'gi://Shell';
+import GLib from 'gi://GLib';
 
 import { panel } from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { formatDateWithCFormatString } from 'resource:///org/gnome/shell/misc/dateUtils.js'
-const Mainloop = imports.mainloop;
 
 const dateMenu = panel.statusArea.dateMenu;
 
@@ -37,12 +37,12 @@ export default class TidmExtension extends Extension {
         // permanent date update after opening the menu
         this._handlerId = dateMenu.menu.connect('open-state-changed', (_, isOpen) => {
             if (isOpen) {
-                this._updateTimerId = Mainloop.timeout_add(100, () => {
+                this._updateTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 100, () => {
                     dateMenu._date.setDate(new Date());
                     return true;
                 });
             } else {
-                Mainloop.source_remove(this._updateTimerId);
+                GLib.Source.source_remove(this._updateTimerId);
                 this._updateTimerId = null;
             }
         });
@@ -67,7 +67,7 @@ export default class TidmExtension extends Extension {
 
     disable() {
         // disabling the update timer
-        Mainloop.source_remove(this._updateTimerId);
+        GLib.Source.source_remove(this._updateTimerId);
         this._updateTimerId = null;
 
         // disabling the handler

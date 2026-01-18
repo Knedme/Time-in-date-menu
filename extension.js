@@ -42,7 +42,13 @@ export default class TidmExtension extends Extension {
                     return true;
                 });
             } else {
-                GLib.Source.source_remove(this._updateTimerId);
+                if (typeof GLib.source_remove === 'function') {
+                    GLib.source_remove(this._updateTimerId);
+                } 
+                // Fallback to the legacy way
+                else if (GLib.Source && typeof GLib.Source.source_remove === 'function') {
+                    GLib.Source.source_remove(this._updateTimerId);
+                }
                 this._updateTimerId = null;
             }
         });
@@ -67,7 +73,13 @@ export default class TidmExtension extends Extension {
 
     disable() {
         // disabling the update timer
-        GLib.Source.source_remove(this._updateTimerId);
+        if (typeof GLib.source_remove === 'function') {
+            GLib.source_remove(this._updateTimerId);
+        } 
+        // Fallback to the legacy way
+        else if (GLib.Source && typeof GLib.Source.source_remove === 'function') {
+            GLib.Source.source_remove(this._updateTimerId);
+        }
         this._updateTimerId = null;
 
         // disabling the handler

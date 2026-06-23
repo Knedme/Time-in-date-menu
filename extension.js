@@ -21,6 +21,9 @@ export default class TidmExtension extends Extension {
             this._updateTimeFormat();
         });
 
+        // saving the original setDate so it can be restored on disable
+        this._originalSetDate = dateMenu._date.setDate;
+
         // overriding setDate to display the time
         dateMenu._date.setDate = (date) => {
             dateMenu._date._dayLabel.set_text(formatDateWithCFormatString(date, '%A'));
@@ -41,8 +44,8 @@ export default class TidmExtension extends Extension {
                     dateMenu._date.setDate(new Date());
                     return true;
                 });
-            } else {
-                GLib.Source.source_remove(this._updateTimerId);
+            } else if (this._updateTimerId) {
+                GLib.source_remove(this._updateTimerId);
                 this._updateTimerId = null;
             }
         });
@@ -67,23 +70,18 @@ export default class TidmExtension extends Extension {
 
     disable() {
         // disabling the update timer
-        GLib.Source.source_remove(this._updateTimerId);
-        this._updateTimerId = null;
+        if (this._updateTimerId) {
+            GLib.source_remove(this._updateTimerId);
+            this._updateTimerId = null;
+        }
 
         // disabling the handler
         dateMenu.menu.disconnect(this._handlerId);
         this._handlerId = null;
 
-        // restoring normal setDate
-        dateMenu._date.setDate = (date) => {
-            dateMenu._date._dayLabel.set_text(date.toLocaleFormat('%A'));
-
-            let dateFormat = Shell.util_translate_time_string(N_("%B %-d %Y"));
-            dateMenu._date._dateLabel.set_text(date.toLocaleFormat(dateFormat));
-
-            dateFormat = Shell.util_translate_time_string(N_("%A %B %e %Y"));
-            dateMenu._date.accessible_name = date.toLocaleFormat(dateFormat);
-        };
+        // restoring the original setDate
+        dateMenu._date.setDate = this._originalSetDate;
+        this._originalSetDate = null;
 
         this._timeFormat = null;
         this._settings = null;
